@@ -1,5 +1,3 @@
-using System;
-
 namespace AppspaceChallenge.API.DTO
 {
   public class WeeklyPlanning

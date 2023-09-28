@@ -58,30 +58,23 @@ namespace AppspaceChallenge.API.Repositories
 
     public IEnumerable<BeezyCinema.Movie> GetMoviesWithBiggestSeatsSold(int cinemaId)
     {
-      try
-      {
-        var query = from cinema in _dbContext.Cinemas
-                    join room in _dbContext.Rooms on cinema.Id equals room.CinemaId
-                    join session in _dbContext.Sessions on room.Id equals session.RoomId
-                    join movie in _dbContext.Movies on session.MovieId equals movie.Id
-                    where cinema.Id == cinemaId &&
-                          session.SeatsSold > 0.75 * (
-                              from s in _dbContext.Sessions
-                              join r in _dbContext.Rooms on s.RoomId equals r.Id
-                              join c in _dbContext.Cinemas on r.CinemaId equals c.Id
-                              where c.Id == cinemaId
-                              select (double?)s.SeatsSold ?? 0
-                          ).Max()
-                    select movie;
+      var query = from cinema in _dbContext.Cinemas
+                  join room in _dbContext.Rooms on cinema.Id equals room.CinemaId
+                  join session in _dbContext.Sessions on room.Id equals session.RoomId
+                  join movie in _dbContext.Movies on session.MovieId equals movie.Id
+                  where cinema.Id == cinemaId &&
+                        session.SeatsSold > 0.75 * (
+                            from s in _dbContext.Sessions
+                            join r in _dbContext.Rooms on s.RoomId equals r.Id
+                            join c in _dbContext.Cinemas on r.CinemaId equals c.Id
+                            where c.Id == cinemaId
+                            select (double?)s.SeatsSold ?? 0
+                        ).Max()
+                  select movie;
 
 
-        var result = query.ToList();
-        return result;
-      }
-      catch (Exception e)
-      {
-        throw new Exception(e.Message);
-      }
+      var result = query.ToList();
+      return result;
     }
   }
 }
