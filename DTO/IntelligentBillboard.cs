@@ -1,4 +1,4 @@
-namespace AppspaceChallenge.API.Models
+namespace AppspaceChallenge.API.DTO
 {
   public class IntelligentBillboard
   {

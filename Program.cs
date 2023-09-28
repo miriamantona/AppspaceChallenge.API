@@ -1,4 +1,9 @@
+using AppspaceChallenge.API.DBContext;
 using AppspaceChallenge.API.Repositories;
+using AppspaceChallenge.API.Services;
+using Microsoft.EntityFrameworkCore;
+
+var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +15,26 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IMoviesRepository, MoviesRepository>();
+builder.Services.AddScoped<IGenresRepository, GenresRepository>();
+builder.Services.AddScoped<IIntelligentBillBoardManager, IntelligentBillBoardManager>();
+
+
+builder.Services.AddDbContext<BeezyCinemaDBContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BeezyCinemaReadOnly")));
+
+//Enable CORS
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy(name: myAllowSpecificOrigins,
+    builder =>
+    {
+      builder.WithOrigins("https://localhost:4200/")
+      .AllowAnyMethod()
+      .AllowAnyHeader()
+      .AllowAnyOrigin();
+    });
+});
+
 
 var app = builder.Build();
 
@@ -21,6 +46,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(myAllowSpecificOrigins);
 
 app.UseAuthorization();
 

@@ -1,6 +1,7 @@
-using AppspaceChallenge.API.Models;
-using AppspaceChallenge.API.Repositories;
+using AppspaceChallenge.API.DTO;
+using AppspaceChallenge.API.Services;
 using Microsoft.AspNetCore.Mvc;
+using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
 
 namespace AppspaceChallenge.API.Controllers
 {
@@ -8,24 +9,24 @@ namespace AppspaceChallenge.API.Controllers
   [Route("[controller]")]
   public class TheaterManagerController : ControllerBase
   {
-    private readonly IMoviesRepository _repository;
+    private readonly IIntelligentBillBoardManager _intelligentBillBoardManager;
 
-    public TheaterManagerController(IMoviesRepository repository)
+    public TheaterManagerController(IIntelligentBillBoardManager intelligentBillBoardManager)
     {
-      _repository = repository;
+      _intelligentBillBoardManager = intelligentBillBoardManager;
     }
 
-    [HttpGet(Name = "GetIntelligentBillboard")]
-    public async Task<IEnumerable<Movie>> Get(DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
+    [HttpGet("GetIntelligentBillboard", Name = "GetIntelligentBillboard")]
+    public async Task<IntelligentBillboard> GetIntelligentBillboard(DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
     {
-      return await _repository.GetMovies(from, to);
+      return await _intelligentBillBoardManager.CreateIntelligentBillboard(from, to, screensInBigRooms, screensInSmallRooms);
     }
 
-    /*
-    [HttpGet(Name = "GetIntelligentBillboardWithSuccessfullMovies")]
-    public IEnumerable<IntelligentBillboard> Get(int cinemaId, DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
+    [HttpGet("GetIntelligentBillboardWithSuccessfullMovies", Name = "GetIntelligentBillboardWithSuccessfullMovies")]
+    public IEnumerable<BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(int cinemaId, DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
     {
-      return null;
-    }*/
+      var result = _intelligentBillBoardManager.GetIntelligentBillboardWithSuccessfullMovies(cinemaId, from, to, screensInBigRooms, screensInSmallRooms);
+      return result;
+    }
   }
 }
