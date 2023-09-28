@@ -1,4 +1,5 @@
-using AppspaceChallenge.API.DTO;
+using AppspaceChallenge.API.DTO.Input;
+using AppspaceChallenge.API.DTO.Output;
 using AppspaceChallenge.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
@@ -16,10 +17,10 @@ namespace AppspaceChallenge.API.Controllers
       _intelligentBillBoardManager = intelligentBillBoardManager;
     }
 
-    [HttpGet("GetIntelligentBillboard", Name = "GetIntelligentBillboard")]
-    public async Task<IntelligentBillboard> GetIntelligentBillboard(DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
+    [HttpPost("GetIntelligentBillboard", Name = "GetIntelligentBillboard")]
+    public async Task<IntelligentBillboard> GetIntelligentBillboard(IntelligentBillboardRequest request)
     {
-      return await _intelligentBillBoardManager.CreateIntelligentBillboard(from, to, screensInBigRooms, screensInSmallRooms);
+      return await _intelligentBillBoardManager.CreateIntelligentBillboard(request);
     }
 
     [HttpGet("GetIntelligentBillboardWithSuccessfullMovies", Name = "GetIntelligentBillboardWithSuccessfullMovies")]

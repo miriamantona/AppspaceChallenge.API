@@ -1,6 +1,5 @@
 using AppspaceChallenge.API.DBContext;
 using AppspaceChallenge.API.Responses;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
 using TMDB = AppspaceChallenge.API.Model.TMBD;

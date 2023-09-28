@@ -1,14 +1,8 @@
-using AppspaceChallenge.API.DTO;
+using AppspaceChallenge.API.Constants;
+using AppspaceChallenge.API.DTO.Input;
+using AppspaceChallenge.API.DTO.Output;
 using AppspaceChallenge.API.Repositories;
 using TMBD = AppspaceChallenge.API.Model.TMBD;
-using Constants = AppspaceChallenge.API.Constants;
-using AppspaceChallenge.API.Constants;
-using AppspaceChallenge.API.Model.TMBD;
-using System.Collections.ObjectModel;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-
 
 namespace AppspaceChallenge.API.Services
 {
@@ -25,44 +19,44 @@ namespace AppspaceChallenge.API.Services
       _moviesRepository = moviesRepository;
     }
 
-    public async Task<IntelligentBillboard> CreateIntelligentBillboard(DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)//DTO???
+    public async Task<IntelligentBillboard> CreateIntelligentBillboard(IntelligentBillboardRequest request)
     {
       IntelligentBillboard billboard = new IntelligentBillboard();
-      int numberOfDays = (to - from).Days + 1;
-      int minimumResults = numberOfDays * (screensInBigRooms + screensInSmallRooms);
+      int numberOfDays = (request.To - request.From).Days + 1;
+      int minimumResults = numberOfDays * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
       int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);
 
-      movies = await _moviesRepository.GetMoviesFromTMDB(from, to, minimumPages);
+      movies = await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, minimumPages);
       assignedMovies = new List<TMBD.Movie>();
 
-      for (DateTime date = from; date <= to; date = date.AddDays(8 - (int)date.DayOfWeek))
+      for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
         WeeklyPlanning weeklyPlanning = new WeeklyPlanning();
 
-        for (DateTime currentDay = date; currentDay < date.AddDays(8 - (int)date.DayOfWeek) && currentDay <= to; currentDay = currentDay.AddDays(1))
+        for (DateTime currentDay = date; currentDay < date.AddDays(8 - (int)date.DayOfWeek) && currentDay <= request.To; currentDay = currentDay.AddDays(1))
         {
           switch (currentDay.DayOfWeek)
           {
             case DayOfWeek.Monday:
-              weeklyPlanning.Monday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Monday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Tuesday:
-              weeklyPlanning.Tuesday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Tuesday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Wednesday:
-              weeklyPlanning.Wednesday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Wednesday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Thursday:
-              weeklyPlanning.Thursday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Thursday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Friday:
-              weeklyPlanning.Friday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Friday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Saturday:
-              weeklyPlanning.Saturday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Saturday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             case DayOfWeek.Sunday:
-              weeklyPlanning.Sunday = AssignMoviesToDailyPlanning(currentDay, screensInBigRooms, screensInSmallRooms);
+              weeklyPlanning.Sunday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
               break;
             default:
               break;

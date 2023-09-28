@@ -1,4 +1,4 @@
-namespace AppspaceChallenge.API.DTO
+namespace AppspaceChallenge.API.DTO.Output
 {
   public class IntelligentBillboard
   {
@@ -6,7 +6,7 @@ namespace AppspaceChallenge.API.DTO
 
     public IntelligentBillboard()
     {
-      this.WeeklyPlannings = new List<WeeklyPlanning>();
+      WeeklyPlannings = new List<WeeklyPlanning>();
     }
   }
 }

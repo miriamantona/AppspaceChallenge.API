@@ -1,4 +1,4 @@
-namespace AppspaceChallenge.API.DTO
+namespace AppspaceChallenge.API.DTO.Output
 {
   public class WeeklyPlanning
   {
