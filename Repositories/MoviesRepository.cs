@@ -24,36 +24,42 @@ namespace AppspaceChallenge.API.Repositories
       _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<TMDB.Movie>> GetMoviesFromTMDB(DateTime from, DateTime to)
+    public async Task<IEnumerable<TMDB.Movie>> GetMoviesFromTMDB(DateTime from, DateTime to, int minimumPages)
     {
-      string url = $"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&release_date.gte={from:yyyy-MM-dd}&release_date.lte={to:yyyy-MM-dd}&sort_by=popularity.desc";
+      List<TMDB.Movie> allMovies = new List<TMDB.Movie>();
 
-      HttpResponseMessage response = await _httpClient.GetAsync(url);
-
-      if (!response.IsSuccessStatusCode)
-        throw new Exception("Error en la solicitud: " + response.ReasonPhrase);
-
-      string jsonResult = await response.Content.ReadAsStringAsync();
-      var movieList = JsonConvert.DeserializeObject<MovieListResponse>(jsonResult);
-
-      if (movieList == null || !movieList.results.Any())
-        return Enumerable.Empty<TMDB.Movie>();
-
-      var movies = movieList.results;
-      var genres = await _genresRepository.GetGenres();
-
-      if (genres == null)
-        return Enumerable.Empty<TMDB.Movie>();
-
-      foreach (var movie in movies)
+      for (var currentPage = 1; currentPage <= minimumPages; currentPage++)
       {
-        var genreNames = movie.Genre_ids
-            .Select(id => genres.FirstOrDefault(g => g.Id == id).Name)
-            .ToList();
+        string url = $"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={currentPage}&release_date.gte={from:yyyy-MM-dd}&release_date.lte={to:yyyy-MM-dd}&sort_by=popularity.desc";
 
-        movie.Genres = genreNames;
+        HttpResponseMessage response = await _httpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+          throw new Exception("Error en la solicitud: " + response.ReasonPhrase);
+
+        string jsonResult = await response.Content.ReadAsStringAsync();
+        var movieList = JsonConvert.DeserializeObject<MovieListResponse>(jsonResult);
+
+        if (movieList == null || !movieList.results.Any())
+          return Enumerable.Empty<TMDB.Movie>();
+
+        var movies = movieList.results;
+        var genres = await _genresRepository.GetGenres();
+
+        if (genres == null)
+          return Enumerable.Empty<TMDB.Movie>();
+
+        foreach (var movie in movies)
+        {
+          var genreNames = movie.Genre_ids
+              .Select(id => genres.FirstOrDefault(g => g.Id == id).Name)
+              .ToList();
+
+          movie.Genres = genreNames;
+        }
+        allMovies.AddRange(movies);
       }
-      return movies;
+      return allMovies;
     }
 
     public IEnumerable<BeezyCinema.Movie> GetMoviesWithBiggestSeatsSold(int cinemaId)
