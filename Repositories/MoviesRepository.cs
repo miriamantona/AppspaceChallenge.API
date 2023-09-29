@@ -3,6 +3,7 @@ using AppspaceChallenge.API.Responses;
 using Newtonsoft.Json;
 using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
 using TMDB = AppspaceChallenge.API.Model.TMBD;
+using DTOOutput = AppspaceChallenge.API.DTO.Output;
 
 namespace AppspaceChallenge.API.Repositories
 {
@@ -10,8 +11,6 @@ namespace AppspaceChallenge.API.Repositories
   {
     private readonly HttpClient _httpClient;
     private readonly BeezyCinemaDBContext _dbContext;
-
-
 
     public MoviesRepository(BeezyCinemaDBContext dbContext)
     {

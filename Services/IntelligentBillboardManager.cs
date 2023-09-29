@@ -1,121 +1,146 @@
 using AppspaceChallenge.API.Constants;
-using AppspaceChallenge.API.DTO.Input;
-using AppspaceChallenge.API.DTO.Output;
+using AppspaceChallenge.API.Model.TMBD;
 using AppspaceChallenge.API.Repositories;
+using DTOInput = AppspaceChallenge.API.DTO.Input;
+using DTOOutput = AppspaceChallenge.API.DTO.Output;
 using TMBD = AppspaceChallenge.API.Model.TMBD;
+using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
 
 namespace AppspaceChallenge.API.Services
 {
   public class IntelligentBillBoardManager : IIntelligentBillBoardManager
   {
     private readonly IMoviesRepository _moviesRepository;
+    private readonly IGenresRepository _genresRepository;
+    private readonly IKeywordsRepository _keywordsRepository;
 
     private IEnumerable<TMBD.Movie> movies;
-    private IList<TMBD.Movie> assignedMovies;
+    private IList<string> assignedMovies;
     private const int resultsPerPage = 20;
+    private IEnumerable<Genre> genres;
 
-    public IntelligentBillBoardManager(IMoviesRepository moviesRepository)
+    public IntelligentBillBoardManager(IMoviesRepository moviesRepository, IGenresRepository genresRepository, IKeywordsRepository keywordsRepository)
     {
       _moviesRepository = moviesRepository;
+      _genresRepository = genresRepository;
+      _keywordsRepository = keywordsRepository;
     }
 
-    public async Task<IntelligentBillboard> CreateIntelligentBillboard(IntelligentBillboardRequest request)
+    public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(DTOInput.IntelligentBillboardRequest request)
     {
-      IntelligentBillboard billboard = new IntelligentBillboard();
-      int numberOfDays = (request.To - request.From).Days + 1;
-      int minimumResults = numberOfDays * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
+      DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
+      int numberOfWeeks = CompleteWeeks(request.From, request.To);
+      int minimumResults = numberOfWeeks * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
       int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);
 
       movies = await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, minimumPages);
-      assignedMovies = new List<TMBD.Movie>();
+
+      if (movies == null || !movies.Any())
+        throw new Exception("No movies found");
+
+      assignedMovies = new List<string>();
+      genres = await _genresRepository.GetGenres();
+
+      if (movies == null || !movies.Any())
+        throw new Exception("No genres found");
 
       for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
-        WeeklyPlanning weeklyPlanning = new WeeklyPlanning();
-
-        for (DateTime currentDay = date; currentDay < date.AddDays(8 - (int)date.DayOfWeek) && currentDay <= request.To; currentDay = currentDay.AddDays(1))
+        DTOOutput.WeeklyPlanning weeklyPlanning = new DTOOutput.WeeklyPlanning()
         {
-          switch (currentDay.DayOfWeek)
-          {
-            case DayOfWeek.Monday:
-              weeklyPlanning.Monday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Tuesday:
-              weeklyPlanning.Tuesday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Wednesday:
-              weeklyPlanning.Wednesday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Thursday:
-              weeklyPlanning.Thursday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Friday:
-              weeklyPlanning.Friday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Saturday:
-              weeklyPlanning.Saturday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            case DayOfWeek.Sunday:
-              weeklyPlanning.Sunday = AssignMoviesToDailyPlanning(currentDay, request.ScreensInBigRooms, request.ScreensInSmallRooms);
-              break;
-            default:
-              break;
-          }
-        }
-
+          From = date,
+          To = date.AddDays(7 - (int)date.DayOfWeek),
+          BigRoomMovies = await SearchMoviesForBigRooms(date, request.ScreensInBigRooms),
+          SmallRoomMovies = await SearchMoviesForSmallRooms(date, request.ScreensInSmallRooms)
+        };
         billboard.WeeklyPlannings.Add(weeklyPlanning);
       }
       return billboard;
     }
 
-    public IEnumerable<Model.BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(IntelligentBillboardWithSuccessfullMoviesRequest request)
+    public IEnumerable<BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(DTOInput.IntelligentBillboardWithSuccessfullMoviesRequest request)
     {
       var result = _moviesRepository.GetMoviesWithBiggestSeatsSold(request.CinemaId);
       return result;
     }
-
-    private DailyPlanning AssignMoviesToDailyPlanning(DateTime currentDay, int screensInBigRooms, int screensInSmallRooms)
+    static int CompleteWeeks(DateTime from, DateTime to)
     {
-      return new DailyPlanning()
-      {
-        Date = currentDay,
-        BigRoomMovies = SearchMoviesForBigRooms(currentDay, screensInBigRooms),
-        SmallRoomMovies = SearchMoviesForSmallRooms(currentDay, screensInSmallRooms)
-      };
+      int days = (int)(to - from).TotalDays + 1;
+      int extraDays = (int)from.DayOfWeek;
+      int totalDays = days + extraDays;
+
+      return totalDays / 7;
     }
 
-    private IList<string> SearchMoviesForBigRooms(DateTime currentDay, int screensInBigRooms)
+    private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForBigRooms(DateTime currentDay, int screensInBigRooms)
     {
+      // A movie is considered for a big room if more than half of its genres are classified as blockbusters.
+      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
+
       var moviesForBigRooms = (from m in movies
+                               let blockbusterGenres = m.Genre_ids.Count(g => Constants.Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
                                where m.Release_date <= currentDay &&
-                               Constants.Genres.BlockbusterGenres()
-                                   .Any(blockbusterGenre => m.Genre_ids.Contains(Genres.GenreInfo[blockbusterGenre].TMDBId)) &&
-                               !assignedMovies.Any(assignedMovie => assignedMovie.Title == m.Title)
-                               select m).Take(screensInBigRooms).ToList();
+                                     blockbusterGenres > m.Genre_ids.Count / 2 &&
+                                     !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
+                               select m).Take(screensInBigRooms);
 
       foreach (var movie in moviesForBigRooms)
       {
-        this.assignedMovies.Add(movie);
+        DTOOutput.SuggestedMovie suggestedMovie = new DTOOutput.SuggestedMovie
+        {
+          Title = movie.Title,
+          Overview = movie.Overview,
+          ReleaseDate = movie.Release_date,
+          Language = movie.Original_language,
+          Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
+          Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
+        };
+        suggestedMovies.Add(suggestedMovie);
       }
 
-      return moviesForBigRooms.Select(m => m.Title).ToList();
+
+      foreach (var movie in moviesForBigRooms)
+      {
+        this.assignedMovies.Add(movie.Title);
+      }
+
+      return suggestedMovies;
     }
 
-    private IList<string> SearchMoviesForSmallRooms(DateTime currentDay, int screensInSmallRooms)
+    private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForSmallRooms(DateTime currentDay, int screensInSmallRooms)
     {
-      var moviesForSmallRooms = (from m in movies
-                               where m.Release_date <= currentDay &&
-                               Constants.Genres.MinorityGenres()
-                                   .Any(minorityGenre => m.Genre_ids.Contains(Genres.GenreInfo[minorityGenre].TMDBId)) &&
-                               !assignedMovies.Any(assignedMovies => assignedMovies.Title == m.Title)
-                               select m).Take(screensInSmallRooms).ToList();
+      // A movie is considered for a small room if more than half of its genres are classified as minority genres.
 
-      foreach (var movie in moviesForSmallRooms)
+      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
+
+      var moviesForSmalRooms = (from m in movies
+                               let minorityGenres = m.Genre_ids.Count(g => Constants.Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
+                               where m.Release_date <= currentDay &&
+                                     minorityGenres > m.Genre_ids.Count / 2 &&
+                                     !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
+                               select m).Take(screensInSmallRooms);
+
+      foreach (var movie in moviesForSmalRooms)
       {
-        this.assignedMovies.Add(movie);
+        DTOOutput.SuggestedMovie suggestedMovie = new DTOOutput.SuggestedMovie
+        {
+          Title = movie.Title,
+          Overview = movie.Overview,
+          ReleaseDate = movie.Release_date,
+          Language = movie.Original_language,
+          Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
+          Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
+        };
+        suggestedMovies.Add(suggestedMovie);
       }
 
-      return moviesForSmallRooms.Select(m => m.Title).ToList();
+
+      foreach (var movie in moviesForSmalRooms)
+      {
+        this.assignedMovies.Add(movie.Title);
+      }
+
+      return suggestedMovies;
     }
   }
 }

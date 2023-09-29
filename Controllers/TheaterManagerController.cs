@@ -1,5 +1,6 @@
 using AppspaceChallenge.API.DTO.Input;
 using AppspaceChallenge.API.DTO.Output;
+using AppspaceChallenge.API.Responses;
 using AppspaceChallenge.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;

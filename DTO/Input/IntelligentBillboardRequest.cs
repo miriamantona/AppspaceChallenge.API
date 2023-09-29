@@ -2,6 +2,7 @@ namespace AppspaceChallenge.API.DTO.Input
 {
   public class IntelligentBillboardRequest
   {
+    //Add validation filters!
     public DateTime From { get; set; }
     public DateTime To { get; set; }
     public int ScreensInBigRooms { get; set; }

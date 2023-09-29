@@ -1,9 +1,9 @@
-using AppspaceChallenge.API.Model.TMBD;
+using TMBD = AppspaceChallenge.API.Model.TMBD;
 
 namespace AppspaceChallenge.API.Responses
 {
   public class GenresListResponse
   {
-    public List<Genre> Genres { get; set; }
+    public List<TMBD.Genre> Genres { get; set; }
   }
 }
