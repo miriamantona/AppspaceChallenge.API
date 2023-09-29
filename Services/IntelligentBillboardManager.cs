@@ -1,5 +1,3 @@
-using AppspaceChallenge.API.Constants;
-using AppspaceChallenge.API.Model.TMBD;
 using AppspaceChallenge.API.Repositories;
 using DTOInput = AppspaceChallenge.API.DTO.Input;
 using DTOOutput = AppspaceChallenge.API.DTO.Output;
@@ -13,22 +11,26 @@ namespace AppspaceChallenge.API.Services
     private readonly IMoviesRepository _moviesRepository;
     private readonly IGenresRepository _genresRepository;
     private readonly IKeywordsRepository _keywordsRepository;
+    private readonly IDetailsRepository _detailsRepository;
 
     private IEnumerable<TMBD.Movie> movies;
     private IList<string> assignedMovies;
     private const int resultsPerPage = 20;
-    private IEnumerable<Genre> genres;
+    private IEnumerable<TMBD.Genre> genres;
 
-    public IntelligentBillBoardManager(IMoviesRepository moviesRepository, IGenresRepository genresRepository, IKeywordsRepository keywordsRepository)
+    public IntelligentBillBoardManager(IMoviesRepository moviesRepository,
+      IGenresRepository genresRepository,
+      IKeywordsRepository keywordsRepository,
+      IDetailsRepository detailsRepository)
     {
       _moviesRepository = moviesRepository;
       _genresRepository = genresRepository;
       _keywordsRepository = keywordsRepository;
+      _detailsRepository = detailsRepository;
     }
 
     public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(DTOInput.IntelligentBillboardRequest request)
     {
-      DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
       int numberOfWeeks = CompleteWeeks(request.From, request.To);
       int minimumResults = numberOfWeeks * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
       int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);
@@ -38,11 +40,13 @@ namespace AppspaceChallenge.API.Services
       if (movies == null || !movies.Any())
         throw new Exception("No movies found");
 
-      assignedMovies = new List<string>();
       genres = await _genresRepository.GetGenres();
 
       if (movies == null || !movies.Any())
         throw new Exception("No genres found");
+
+      DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
+      assignedMovies = new List<string>();
 
       for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
@@ -74,8 +78,7 @@ namespace AppspaceChallenge.API.Services
 
     private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForBigRooms(DateTime currentDay, int screensInBigRooms)
     {
-      // A movie is considered for a big room if more than half of its genres are classified as blockbusters.
-      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
+      // A movie is considered for a big room if more than half of its genres are classified as blockbusters.     
 
       var moviesForBigRooms = (from m in movies
                                let blockbusterGenres = m.Genre_ids.Count(g => Constants.Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
@@ -84,23 +87,11 @@ namespace AppspaceChallenge.API.Services
                                      !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
                                select m).Take(screensInBigRooms);
 
-      foreach (var movie in moviesForBigRooms)
-      {
-        DTOOutput.SuggestedMovie suggestedMovie = new DTOOutput.SuggestedMovie
-        {
-          Title = movie.Title,
-          Overview = movie.Overview,
-          ReleaseDate = movie.Release_date,
-          Language = movie.Original_language,
-          Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
-          Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
-        };
-        suggestedMovies.Add(suggestedMovie);
-      }
-
+      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
 
       foreach (var movie in moviesForBigRooms)
       {
+        suggestedMovies.Add(await PrepareMovieToDTO(movie));
         this.assignedMovies.Add(movie.Title);
       }
 
@@ -114,33 +105,33 @@ namespace AppspaceChallenge.API.Services
       IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
 
       var moviesForSmalRooms = (from m in movies
-                               let minorityGenres = m.Genre_ids.Count(g => Constants.Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
-                               where m.Release_date <= currentDay &&
-                                     minorityGenres > m.Genre_ids.Count / 2 &&
-                                     !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
-                               select m).Take(screensInSmallRooms);
+                                let minorityGenres = m.Genre_ids.Count(g => Constants.Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
+                                where m.Release_date <= currentDay &&
+                                      minorityGenres > m.Genre_ids.Count / 2 &&
+                                      !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
+                                select m).Take(screensInSmallRooms);
 
       foreach (var movie in moviesForSmalRooms)
       {
-        DTOOutput.SuggestedMovie suggestedMovie = new DTOOutput.SuggestedMovie
-        {
-          Title = movie.Title,
-          Overview = movie.Overview,
-          ReleaseDate = movie.Release_date,
-          Language = movie.Original_language,
-          Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
-          Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
-        };
-        suggestedMovies.Add(suggestedMovie);
-      }
-
-
-      foreach (var movie in moviesForSmalRooms)
-      {
+        suggestedMovies.Add(await PrepareMovieToDTO(movie));
         this.assignedMovies.Add(movie.Title);
       }
 
       return suggestedMovies;
+    }
+
+    private async Task<DTOOutput.SuggestedMovie> PrepareMovieToDTO(TMBD.Movie movie)
+    {
+      return new DTOOutput.SuggestedMovie
+      {
+        Title = movie.Title,
+        Overview = movie.Overview,
+        ReleaseDate = movie.Release_date,
+        Language = movie.Original_language,
+        Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
+        Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
+        Website = (await _detailsRepository.GetDetails(movie.Id)).Homepage
+      };
     }
   }
 }
