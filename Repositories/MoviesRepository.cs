@@ -9,17 +9,15 @@ namespace AppspaceChallenge.API.Repositories
   public class MoviesRepository : IMoviesRepository
   {
     private readonly HttpClient _httpClient;
-    private readonly IGenresRepository _genresRepository;
     private readonly BeezyCinemaDBContext _dbContext;
 
 
 
-    public MoviesRepository(IGenresRepository genresRepository, BeezyCinemaDBContext dbContext)
+    public MoviesRepository(BeezyCinemaDBContext dbContext)
     {
       _httpClient = new HttpClient();
       _httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxNThkYjIwYjRjOGRjOGY3MmNjZWI0MjZlNjVkMjUxZiIsInN1YiI6IjY1MTJhNTIwM2E0YTEyMDExY2Y0ZmFlOSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.j7Ra6SCrwScimg1cJGjoGUICUnlEgTCw8dxxZhKMoJY");
 
-      _genresRepository = genresRepository;
       _dbContext = dbContext;
     }
 
@@ -42,21 +40,7 @@ namespace AppspaceChallenge.API.Repositories
         if (movieList == null || !movieList.results.Any())
           return Enumerable.Empty<TMDB.Movie>();
 
-        var movies = movieList.results;
-        var genres = await _genresRepository.GetGenres();
-
-        if (genres == null)
-          return Enumerable.Empty<TMDB.Movie>();
-
-        foreach (var movie in movies)
-        {
-          var genreNames = movie.Genre_ids
-              .Select(id => genres.FirstOrDefault(g => g.Id == id).Name)
-              .ToList();
-
-          movie.Genres = genreNames;
-        }
-        allMovies.AddRange(movies);
+        allMovies.AddRange(movieList.results);
       }
       return allMovies;
     }
