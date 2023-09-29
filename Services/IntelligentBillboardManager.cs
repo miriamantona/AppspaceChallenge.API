@@ -68,6 +68,12 @@ namespace AppspaceChallenge.API.Services
       return billboard;
     }
 
+    public IEnumerable<Model.BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(IntelligentBillboardWithSuccessfullMoviesRequest request)
+    {
+      var result = _moviesRepository.GetMoviesWithBiggestSeatsSold(request.CinemaId);
+      return result;
+    }
+
     private DailyPlanning AssignMoviesToDailyPlanning(DateTime currentDay, int screensInBigRooms, int screensInSmallRooms)
     {
       return new DailyPlanning()
@@ -110,13 +116,6 @@ namespace AppspaceChallenge.API.Services
       }
 
       return moviesForSmallRooms.Select(m => m.Title).ToList();
-    }
-
-
-    public IEnumerable<Model.BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(int cinemaId, DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
-    {
-      var result = _moviesRepository.GetMoviesWithBiggestSeatsSold(cinemaId);
-      return result;
     }
   }
 }

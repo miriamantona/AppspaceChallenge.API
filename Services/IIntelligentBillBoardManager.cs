@@ -6,6 +6,6 @@ namespace AppspaceChallenge.API.Services
   public interface IIntelligentBillBoardManager
   {
     Task<IntelligentBillboard> CreateIntelligentBillboard(IntelligentBillboardRequest request);
-    IEnumerable<Model.BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(int cinemaId, DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms);    
+    IEnumerable<Model.BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(IntelligentBillboardWithSuccessfullMoviesRequest request);    
   }
 }

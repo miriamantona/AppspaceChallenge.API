@@ -24,9 +24,9 @@ namespace AppspaceChallenge.API.Controllers
     }
 
     [HttpGet("GetIntelligentBillboardWithSuccessfullMovies", Name = "GetIntelligentBillboardWithSuccessfullMovies")]
-    public IEnumerable<BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(int cinemaId, DateTime from, DateTime to, int screensInBigRooms, int screensInSmallRooms)
+    public IEnumerable<BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(IntelligentBillboardWithSuccessfullMoviesRequest request)
     {
-      var result = _intelligentBillBoardManager.GetIntelligentBillboardWithSuccessfullMovies(cinemaId, from, to, screensInBigRooms, screensInSmallRooms);
+      var result = _intelligentBillBoardManager.GetIntelligentBillboardWithSuccessfullMovies(request);
       return result;
     }
   }
