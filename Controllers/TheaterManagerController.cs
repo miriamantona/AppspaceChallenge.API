@@ -1,6 +1,7 @@
 using AppspaceChallenge.API.DTO.Input;
 using AppspaceChallenge.API.DTO.Output;
 using AppspaceChallenge.API.Services;
+using AppspaceChallenge.DataAccess.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AppspaceChallenge.API.Controllers
@@ -23,7 +24,25 @@ namespace AppspaceChallenge.API.Controllers
     }
 
     [HttpPost("GetAllTimeRecomendedMovies", Name = "GetAllTimeRecomendedMovies")]
-    public async Task<ICollection<IRecommendation>> GetAllTimeRecomendedMovies(GetAllTimeRecomendedMoviesRequest request)
+    public async Task<ICollection<MovieRecommendation>> GetAllTimeRecomendedMovies(GetAllTimeRecomendedMoviesRequest request)
+    {
+      throw new NotImplementedException();
+    }
+
+    [HttpPost("GetRecommendedUpcomingMoviesFromNow", Name = "GetRecommendedUpcomingMoviesFromNow")]
+    public async Task<ICollection<MovieRecommendation>> GetRecommendedUpcomingMoviesFromNow(GetRecommendedUpcomingMoviesFromNowRequest request)
+    {
+      throw new NotImplementedException();
+    }
+   
+    [HttpPost("GetAllTimeRecommendedTVShows", Name = "GetAllTimeRecommendedTVShows")]
+    public async Task<ICollection<TVShowRecommendation>> GetAllTimeRecommendedTVShows(GetAllTimeRecommendedTVShowsRequest request)
+    {
+      throw new NotImplementedException();
+    }
+
+    [HttpPost("GetAllTimeRecommendedDocumentaries", Name = "GetAllTimeRecommendedDocumentaries")]
+    public async Task<ICollection<DocumentaryRecommendation>> GetAllTimeRecommendedDocumentaries(GetAllTimeRecommendedDocumentariesRequest request)
     {
       throw new NotImplementedException();
     }
