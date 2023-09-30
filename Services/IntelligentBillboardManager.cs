@@ -79,9 +79,9 @@ namespace AppspaceChallenge.API.Services
       return totalDays / 7;
     }
 
-    private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForBigRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForBigRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
     {
-      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
+      IList<DTOOutput.MovieRecommendation> recommendedMovies = new List<DTOOutput.MovieRecommendation>();
 
       // Check first if the are sucessful movies in the city.
       if (sucessfulMoviesInCity != null && sucessfulMoviesInCity.Any())
@@ -92,12 +92,12 @@ namespace AppspaceChallenge.API.Services
 
         foreach (var movie in successfulMoviesForBigRooms)
         {
-          suggestedMovies.Add(await PrepareMovieFromBeezyCinemaToDTO(movie));
+          recommendedMovies.Add(await PrepareMovieFromBeezyCinemaToDTO(movie));
           this.assignedMovies.Add(movie.OriginalTitle);
         }
       }
 
-      if (suggestedMovies.Count < request.ScreensInBigRooms)
+      if (recommendedMovies.Count < request.ScreensInBigRooms)
       {
         // A movie is considered for a big room if more than half of its genres are classified as blockbusters.
 
@@ -106,7 +106,7 @@ namespace AppspaceChallenge.API.Services
                                  where m.Release_date <= currentDay &&
                                        blockbusterGenres > m.Genre_ids.Count / 2 &&
                                        !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
-                                 select m).Take(request.ScreensInBigRooms - suggestedMovies.Count);
+                                 select m).Take(request.ScreensInBigRooms - recommendedMovies.Count);
 
         if (moviesForBigRooms == null || !moviesForBigRooms.Any())
         {
@@ -116,18 +116,18 @@ namespace AppspaceChallenge.API.Services
 
         foreach (var movie in moviesForBigRooms)
         {
-          suggestedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
+          recommendedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
           this.assignedMovies.Add(movie.Title);
         }
       }
-      return suggestedMovies;
+      return recommendedMovies;
     }
 
-    private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForSmallRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForSmallRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
     {
       // A movie is considered for a small room if more than half of its genres are classified as minority genres.
 
-      IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
+      IList<DTOOutput.MovieRecommendation> recommendedMovies = new List<DTOOutput.MovieRecommendation>();
 
       var moviesForSmalRooms = (from m in movies
                                 let minorityGenres = m.Genre_ids.Count(g => Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
@@ -144,16 +144,16 @@ namespace AppspaceChallenge.API.Services
 
       foreach (var movie in moviesForSmalRooms)
       {
-        suggestedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
+        recommendedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
         this.assignedMovies.Add(movie.Title);
       }
 
-      return suggestedMovies;
+      return recommendedMovies;
     }
 
-    private async Task<DTOOutput.SuggestedMovie> PrepareMovieFromTMDBToDTO(TMBD.Movie movie)
+    private async Task<DTOOutput.MovieRecommendation> PrepareMovieFromTMDBToDTO(TMBD.Movie movie)
     {
-      return new DTOOutput.SuggestedMovie
+      return new DTOOutput.MovieRecommendation
       {
         Title = movie.Title,
         Overview = movie.Overview,
@@ -165,11 +165,11 @@ namespace AppspaceChallenge.API.Services
       };
     }
 
-    private async Task<DTOOutput.SuggestedMovie> PrepareMovieFromBeezyCinemaToDTO(BeezyCinema.Movie movie)
+    private async Task<DTOOutput.MovieRecommendation> PrepareMovieFromBeezyCinemaToDTO(BeezyCinema.Movie movie)
     {
       var movieTMDB = await _moviesRepository.GetMovieFromTMDB(movie.OriginalTitle);
 
-      return new DTOOutput.SuggestedMovie
+      return new DTOOutput.MovieRecommendation
       {
         Title = movie.OriginalTitle,
         Overview = movieTMDB.Overview,

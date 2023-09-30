@@ -1,6 +1,6 @@
 namespace AppspaceChallenge.API.DTO.Output
 {
-  public class SuggestedMovie
+  public class MovieRecommendation: IRecommendation
   {
     public string Title { get; set; }
     public string Overview { get; set; }

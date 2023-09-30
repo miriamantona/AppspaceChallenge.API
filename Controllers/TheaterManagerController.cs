@@ -21,5 +21,11 @@ namespace AppspaceChallenge.API.Controllers
     {
       return await _intelligentBillBoardManager.CreateIntelligentBillboard(request);
     }
+
+    [HttpPost("GetAllTimeRecomendedMovies", Name = "GetAllTimeRecomendedMovies")]
+    public async Task<ICollection<IRecommendation>> GetAllTimeRecomendedMovies(GetAllTimeRecomendedMoviesRequest request)
+    {
+      throw new NotImplementedException();
+    }
   }
 }
