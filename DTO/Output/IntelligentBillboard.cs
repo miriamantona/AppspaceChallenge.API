@@ -4,11 +4,11 @@ namespace AppspaceChallenge.API.DTO.Output
 {
   public class IntelligentBillboard
   {
-    public ICollection<WeeklyPlanning> WeeklyPlannings { get; set; }
+    public ICollection<IntelligentWeeklyPlanning> WeeklyPlannings { get; set; }
 
     public IntelligentBillboard()
     {
-      WeeklyPlannings = new Collection<WeeklyPlanning>();
+      WeeklyPlannings = new Collection<IntelligentWeeklyPlanning>();
     }
   }
 }

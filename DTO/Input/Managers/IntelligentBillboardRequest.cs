@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AppspaceChallenge.API.DTO.Input
+namespace AppspaceChallenge.API.DTO.Input.Managers
 {
-  public class IntelligentBillboardRequest: IValidatableObject
+  public class IntelligentBillboardRequest : ManagerBaseRequest, IValidatableObject
   {
     [Required(ErrorMessage = "The 'From' date is required.")]
     public DateTime From { get; set; }
@@ -15,10 +15,6 @@ namespace AppspaceChallenge.API.DTO.Input
 
     [Required(ErrorMessage = "The number of screens in small rooms is required.")]
     public int ScreensInSmallRooms { get; set; }
-
-    public bool IncludeSuccessfulMoviesInCity { get; set; }
-
-    public int? CityId { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

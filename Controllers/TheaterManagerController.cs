@@ -1,7 +1,6 @@
-using AppspaceChallenge.API.DTO.Input;
+using Managers = AppspaceChallenge.API.DTO.Input.Managers;
 using AppspaceChallenge.API.DTO.Output;
 using AppspaceChallenge.API.Services;
-using AppspaceChallenge.DataAccess.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AppspaceChallenge.API.Controllers
@@ -17,34 +16,26 @@ namespace AppspaceChallenge.API.Controllers
       _intelligentBillBoardManager = intelligentBillBoardManager;
     }
 
+    // Use case 8
+    [HttpPost("GetUpcomingRecommendedMovies", Name = "GetUpcomingRecommendedMovies")]
+    public async Task<ICollection<MovieRecommendation>> GetUpcomingRecommendedMovies(Managers.UpcomingRecommendedMoviesForManagersRequest request)
+    {
+      throw new NotImplementedException();
+    }
+
+    // Use case 9
+    [HttpPost("GetBillboard", Name = "GetBillboard")]
+    public async Task<ICollection<Billboard>> GetBillboard(Managers.BillboardRequest request)
+    {
+      throw new NotImplementedException();
+    }
+
+    // Use case 10
     [HttpPost("GetIntelligentBillboard", Name = "GetIntelligentBillboard")]
-    public async Task<IntelligentBillboard> GetIntelligentBillboard(IntelligentBillboardRequest request)
+    public async Task<IntelligentBillboard> GetIntelligentBillboard(Managers.IntelligentBillboardRequest request)
     {
       return await _intelligentBillBoardManager.CreateIntelligentBillboard(request);
     }
 
-    [HttpPost("GetAllTimeRecomendedMovies", Name = "GetAllTimeRecomendedMovies")]
-    public async Task<ICollection<MovieRecommendation>> GetAllTimeRecomendedMovies(GetAllTimeRecomendedMoviesRequest request)
-    {
-      throw new NotImplementedException();
-    }
-
-    [HttpPost("GetRecommendedUpcomingMoviesFromNow", Name = "GetRecommendedUpcomingMoviesFromNow")]
-    public async Task<ICollection<MovieRecommendation>> GetRecommendedUpcomingMoviesFromNow(GetRecommendedUpcomingMoviesFromNowRequest request)
-    {
-      throw new NotImplementedException();
-    }
-   
-    [HttpPost("GetAllTimeRecommendedTVShows", Name = "GetAllTimeRecommendedTVShows")]
-    public async Task<ICollection<TVShowRecommendation>> GetAllTimeRecommendedTVShows(GetAllTimeRecommendedTVShowsRequest request)
-    {
-      throw new NotImplementedException();
-    }
-
-    [HttpPost("GetAllTimeRecommendedDocumentaries", Name = "GetAllTimeRecommendedDocumentaries")]
-    public async Task<ICollection<DocumentaryRecommendation>> GetAllTimeRecommendedDocumentaries(GetAllTimeRecommendedDocumentariesRequest request)
-    {
-      throw new NotImplementedException();
-    }
   }
 }

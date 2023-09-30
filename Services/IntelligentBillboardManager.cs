@@ -1,3 +1,4 @@
+using AppspaceChallenge.API.DTO.Input.Managers;
 using AppspaceChallenge.DataAccess.Constants;
 using AppspaceChallenge.DataAccess.Repositories;
 using BeezyCinema = AppspaceChallenge.DataAccess.Model.BeezyCinema;
@@ -27,7 +28,7 @@ namespace AppspaceChallenge.API.Services
       _detailsRepository = detailsRepository;
     }
 
-    public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(DTOInput.IntelligentBillboardRequest request)
+    public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(IntelligentBillboardRequest request)
     {
       DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
       assignedMovies = new List<string>();
@@ -46,7 +47,7 @@ namespace AppspaceChallenge.API.Services
 
       for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
-        DTOOutput.WeeklyPlanning weeklyPlanning = new DTOOutput.WeeklyPlanning()
+        DTOOutput.IntelligentWeeklyPlanning weeklyPlanning = new DTOOutput.IntelligentWeeklyPlanning()
         {
           From = date,
           To = date.AddDays(7 - (int)date.DayOfWeek),
@@ -79,7 +80,7 @@ namespace AppspaceChallenge.API.Services
       return totalDays / 7;
     }
 
-    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForBigRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForBigRooms(DateTime currentDay, IntelligentBillboardRequest request, int minimumPages)
     {
       IList<DTOOutput.MovieRecommendation> recommendedMovies = new List<DTOOutput.MovieRecommendation>();
 
@@ -123,7 +124,7 @@ namespace AppspaceChallenge.API.Services
       return recommendedMovies;
     }
 
-    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForSmallRooms(DateTime currentDay, DTOInput.IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForSmallRooms(DateTime currentDay, IntelligentBillboardRequest request, int minimumPages)
     {
       // A movie is considered for a small room if more than half of its genres are classified as minority genres.
 

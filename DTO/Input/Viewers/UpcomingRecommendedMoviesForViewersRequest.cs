@@ -1,6 +1,6 @@
-namespace AppspaceChallenge.API.DTO.Input
+namespace AppspaceChallenge.API.DTO.Input.Viewers
 {
-  public class GetRecommendedUpcomingMoviesFromNowRequest
+  public class UpcomingRecommendedMoviesForViewersRequest
   {
     public DateTime to { get; set; }
     public List<string> PreferredKeywords { get; set; }

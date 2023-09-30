@@ -1,6 +1,6 @@
-namespace AppspaceChallenge.API.DTO.Input
+namespace AppspaceChallenge.API.DTO.Input.Viewers
 {
-  public class GetAllTimeRecomendedMoviesRequest
+  public class AllTimeRecommendedTVShowsRequest
   {
     public List<string> PreferredKeywords { get; set; }
     public List<string> PreferredGenres { get; set; }

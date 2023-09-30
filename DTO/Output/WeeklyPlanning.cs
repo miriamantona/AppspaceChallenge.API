@@ -4,7 +4,6 @@ namespace AppspaceChallenge.API.DTO.Output
   {
     public DateTime From { get; set; }
     public DateTime To { get; set; }
-    public ICollection<MovieRecommendation> BigRoomMovies { get; set; }
-    public ICollection<MovieRecommendation> SmallRoomMovies { get; set; }
+    public ICollection<MovieRecommendation> Movies { get; set; }
   }
 }
