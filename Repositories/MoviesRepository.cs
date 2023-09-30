@@ -20,28 +20,22 @@ namespace AppspaceChallenge.API.Repositories
       _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<TMDB.Movie>> GetMoviesFromTMDB(DateTime from, DateTime to, int minimumPages)
+    public async Task<IEnumerable<TMDB.Movie>> GetMoviesFromTMDB(DateTime from, DateTime to, int page)
     {
-      List<TMDB.Movie> allMovies = new List<TMDB.Movie>();
+      string url = $"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={page}&release_date.gte={from:yyyy-MM-dd}&release_date.lte={to:yyyy-MM-dd}&sort_by=popularity.desc";
 
-      for (var currentPage = 1; currentPage <= minimumPages; currentPage++)
-      {
-        string url = $"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={currentPage}&release_date.gte={from:yyyy-MM-dd}&release_date.lte={to:yyyy-MM-dd}&sort_by=popularity.desc";
+      HttpResponseMessage response = await _httpClient.GetAsync(url);
 
-        HttpResponseMessage response = await _httpClient.GetAsync(url);
+      if (!response.IsSuccessStatusCode)
+        throw new Exception("Error en la solicitud: " + response.ReasonPhrase);
 
-        if (!response.IsSuccessStatusCode)
-          throw new Exception("Error en la solicitud: " + response.ReasonPhrase);
+      string jsonResult = await response.Content.ReadAsStringAsync();
+      var movieList = JsonConvert.DeserializeObject<MovieListResponse>(jsonResult);
 
-        string jsonResult = await response.Content.ReadAsStringAsync();
-        var movieList = JsonConvert.DeserializeObject<MovieListResponse>(jsonResult);
+      if (movieList == null || !movieList.results.Any())
+        return Enumerable.Empty<TMDB.Movie>();
 
-        if (movieList == null || !movieList.results.Any())
-          return Enumerable.Empty<TMDB.Movie>();
-
-        allMovies.AddRange(movieList.results);
-      }
-      return allMovies;
+      return movieList.results;
     }
 
     public async Task<TMDB.Movie> GetMovieFromTMDB(string title)
@@ -60,8 +54,8 @@ namespace AppspaceChallenge.API.Repositories
         return null;
 
       var query = (from m in movieList.results
-                    where m.Title == title
-                    select m);
+                   where m.Title == title
+                   select m);
 
       var result = query.FirstOrDefault();
       return result;
