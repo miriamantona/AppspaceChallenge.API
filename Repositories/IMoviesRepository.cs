@@ -6,7 +6,7 @@ namespace AppspaceChallenge.API.Repositories
   public interface IMoviesRepository
   {
     Task<IEnumerable<TMDB.Movie>> GetMoviesFromTMDB(DateTime from, DateTime to, int minimumPages);
-
-    IEnumerable<BeezyCinema.Movie> GetMoviesWithBiggestSeatsSold(int cinemaId);
+    Task<TMDB.Movie> GetMovieFromTMDB(string title);
+    IEnumerable<BeezyCinema.Movie> GetMoviesWithBiggestSeatsSold(int cityId);
   }
 }

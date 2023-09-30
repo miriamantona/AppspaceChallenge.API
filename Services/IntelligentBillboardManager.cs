@@ -14,6 +14,7 @@ namespace AppspaceChallenge.API.Services
     private readonly IDetailsRepository _detailsRepository;
 
     private IEnumerable<TMBD.Movie> movies;
+    private IEnumerable<BeezyCinema.Movie> sucessfulMoviesInCity;
     private IList<string> assignedMovies;
     private const int resultsPerPage = 20;
     private IEnumerable<TMBD.Genre> genres;
@@ -36,6 +37,11 @@ namespace AppspaceChallenge.API.Services
       int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);
 
       movies = await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, minimumPages);
+
+      if (request.IncludeSuccessfulMoviesInCity && request.CityId.HasValue)
+      {
+        sucessfulMoviesInCity = _moviesRepository.GetMoviesWithBiggestSeatsSold(request.CityId.Value);
+      }
 
       if (movies == null || !movies.Any())
         throw new Exception("No movies found");
@@ -61,12 +67,6 @@ namespace AppspaceChallenge.API.Services
       }
       return billboard;
     }
-
-    public IEnumerable<BeezyCinema.Movie> GetIntelligentBillboardWithSuccessfullMovies(DTOInput.IntelligentBillboardWithSuccessfullMoviesRequest request)
-    {
-      var result = _moviesRepository.GetMoviesWithBiggestSeatsSold(request.CinemaId);
-      return result;
-    }
     static int CompleteWeeks(DateTime from, DateTime to)
     {
       int days = (int)(to - from).TotalDays + 1;
@@ -78,23 +78,39 @@ namespace AppspaceChallenge.API.Services
 
     private async Task<IList<DTOOutput.SuggestedMovie>> SearchMoviesForBigRooms(DateTime currentDay, int screensInBigRooms)
     {
-      // A movie is considered for a big room if more than half of its genres are classified as blockbusters.     
-
-      var moviesForBigRooms = (from m in movies
-                               let blockbusterGenres = m.Genre_ids.Count(g => Constants.Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
-                               where m.Release_date <= currentDay &&
-                                     blockbusterGenres > m.Genre_ids.Count / 2 &&
-                                     !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
-                               select m).Take(screensInBigRooms);
-
       IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
 
-      foreach (var movie in moviesForBigRooms)
+      // Check first if the are sucessful movies in the city.
+      if (sucessfulMoviesInCity != null && sucessfulMoviesInCity.Any())
       {
-        suggestedMovies.Add(await PrepareMovieToDTO(movie));
-        this.assignedMovies.Add(movie.Title);
+        var successfulMoviesForBigRooms = (from m in sucessfulMoviesInCity
+                                           where !assignedMovies.Any(assignedMovie => assignedMovie == m.OriginalTitle)
+                                           select m).Take(screensInBigRooms);
+
+        foreach (var movie in successfulMoviesForBigRooms)
+        {
+          suggestedMovies.Add(await PrepareMovieFromBeezyCinemaToDTO(movie));
+          this.assignedMovies.Add(movie.OriginalTitle);
+        }
       }
 
+      if (suggestedMovies.Count < screensInBigRooms)
+      {
+        // A movie is considered for a big room if more than half of its genres are classified as blockbusters.
+
+        var moviesForBigRooms = (from m in movies
+                                 let blockbusterGenres = m.Genre_ids.Count(g => Constants.Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
+                                 where m.Release_date <= currentDay &&
+                                       blockbusterGenres > m.Genre_ids.Count / 2 &&
+                                       !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
+                                 select m).Take(screensInBigRooms - suggestedMovies.Count);
+
+        foreach (var movie in moviesForBigRooms)
+        {
+          suggestedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
+          this.assignedMovies.Add(movie.Title);
+        }
+      }
       return suggestedMovies;
     }
 
@@ -113,14 +129,14 @@ namespace AppspaceChallenge.API.Services
 
       foreach (var movie in moviesForSmalRooms)
       {
-        suggestedMovies.Add(await PrepareMovieToDTO(movie));
+        suggestedMovies.Add(await PrepareMovieFromTMDBToDTO(movie));
         this.assignedMovies.Add(movie.Title);
       }
 
       return suggestedMovies;
     }
 
-    private async Task<DTOOutput.SuggestedMovie> PrepareMovieToDTO(TMBD.Movie movie)
+    private async Task<DTOOutput.SuggestedMovie> PrepareMovieFromTMDBToDTO(TMBD.Movie movie)
     {
       return new DTOOutput.SuggestedMovie
       {
@@ -131,6 +147,22 @@ namespace AppspaceChallenge.API.Services
         Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
         Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
         Website = (await _detailsRepository.GetDetails(movie.Id)).Homepage
+      };
+    }
+
+    private async Task<DTOOutput.SuggestedMovie> PrepareMovieFromBeezyCinemaToDTO(BeezyCinema.Movie movie)
+    {
+      var movieTMDB = await _moviesRepository.GetMovieFromTMDB(movie.OriginalTitle);
+
+      return new DTOOutput.SuggestedMovie
+      {
+        Title = movie.OriginalTitle,
+        Overview = movieTMDB.Overview,
+        ReleaseDate = movie.ReleaseDate,
+        Language = movie.OriginalLanguage,
+        Genres = movie.MovieGenres.Select(g => g.Genre.Name).ToList(),
+        Keywords = await _keywordsRepository.GetKeywordNames(movieTMDB.Id),
+        Website = (await _detailsRepository.GetDetails(movieTMDB.Id)).Homepage
       };
     }
   }

@@ -7,5 +7,6 @@ namespace AppspaceChallenge.API.Model.BeezyCinema
     public DateTime ReleaseDate { get; set; }
     public string OriginalLanguage { get; set; }
     public bool Adult { get; set; }
+    public ICollection<MovieGenre> MovieGenres { get; set; }
   }
 }

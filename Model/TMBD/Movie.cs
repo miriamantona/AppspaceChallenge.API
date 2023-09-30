@@ -5,8 +5,10 @@ namespace AppspaceChallenge.API.Model.TMBD
     public int Id { get; set; }
     public string Title { get; set; }
     public List<int> Genre_ids { get; set; }
-    public DateTime Release_date { get; set; }
+    public DateTime? Release_date { get; set; }
     public string Original_language { get; set; }
     public string Overview { get; set; }
+    public List<string> Keywords { get; set; }
+    public string Homepage { get; set; }
   }
 }
