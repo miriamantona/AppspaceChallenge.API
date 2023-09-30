@@ -1,9 +1,8 @@
-using AppspaceChallenge.API.Repositories;
+using AppspaceChallenge.DataAccess.Repositories;
+using BeezyCinema = AppspaceChallenge.DataAccess.Model.BeezyCinema;
 using DTOInput = AppspaceChallenge.API.DTO.Input;
 using DTOOutput = AppspaceChallenge.API.DTO.Output;
-using TMBD = AppspaceChallenge.API.Model.TMBD;
-using BeezyCinema = AppspaceChallenge.API.Model.BeezyCinema;
-using Azure.Core;
+using TMBD = AppspaceChallenge.DataAccess.Model.TMBD;
 
 namespace AppspaceChallenge.API.Services
 {

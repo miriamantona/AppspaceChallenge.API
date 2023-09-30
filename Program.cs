@@ -1,5 +1,5 @@
-using AppspaceChallenge.API.DBContext;
-using AppspaceChallenge.API.Repositories;
+using AppspaceChallenge.DataAccess.DBContext;
+using AppspaceChallenge.DataAccess.Repositories;
 using AppspaceChallenge.API.Services;
 using Microsoft.EntityFrameworkCore;
 
