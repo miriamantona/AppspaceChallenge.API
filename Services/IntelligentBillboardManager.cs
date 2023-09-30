@@ -1,4 +1,4 @@
-using AppspaceChallenge.API.Constants;
+using AppspaceChallenge.DataAccess.Constants;
 using AppspaceChallenge.DataAccess.Repositories;
 using BeezyCinema = AppspaceChallenge.DataAccess.Model.BeezyCinema;
 using DTOInput = AppspaceChallenge.API.DTO.Input;
@@ -102,7 +102,7 @@ namespace AppspaceChallenge.API.Services
         // A movie is considered for a big room if more than half of its genres are classified as blockbusters.
 
         var moviesForBigRooms = (from m in movies
-                                 let blockbusterGenres = m.Genre_ids.Count(g => Constants.Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
+                                 let blockbusterGenres = m.Genre_ids.Count(g => Genres.BlockbusterGenres.Any(bg => bg.Value.TMDBId == g))
                                  where m.Release_date <= currentDay &&
                                        blockbusterGenres > m.Genre_ids.Count / 2 &&
                                        !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
@@ -130,7 +130,7 @@ namespace AppspaceChallenge.API.Services
       IList<DTOOutput.SuggestedMovie> suggestedMovies = new List<DTOOutput.SuggestedMovie>();
 
       var moviesForSmalRooms = (from m in movies
-                                let minorityGenres = m.Genre_ids.Count(g => Constants.Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
+                                let minorityGenres = m.Genre_ids.Count(g => Genres.MinorityGenres.Any(bg => bg.Value.TMDBId == g))
                                 where m.Release_date <= currentDay &&
                                       minorityGenres > m.Genre_ids.Count / 2 &&
                                       !assignedMovies.Any(assignedMovie => assignedMovie == m.Title)
@@ -175,7 +175,7 @@ namespace AppspaceChallenge.API.Services
         Overview = movieTMDB.Overview,
         ReleaseDate = movie.ReleaseDate,
         Language = movie.OriginalLanguage,
-        Genres = movie.MovieGenres.Select(g => g.Genre.Name).ToList(),
+        Genres = movie.MovieGenres.Select(g => Genres.GetGenreByBeezyCinemaId(g.GenreId)).ToList(),
         Keywords = await _keywordsRepository.GetKeywordNames(movieTMDB.Id),
         Website = (await _detailsRepository.GetDetails(movieTMDB.Id)).Homepage
       };
