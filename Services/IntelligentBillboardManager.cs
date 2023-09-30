@@ -1,3 +1,4 @@
+using AppspaceChallenge.API.Constants;
 using AppspaceChallenge.DataAccess.Repositories;
 using BeezyCinema = AppspaceChallenge.DataAccess.Model.BeezyCinema;
 using DTOInput = AppspaceChallenge.API.DTO.Input;
@@ -9,7 +10,6 @@ namespace AppspaceChallenge.API.Services
   public class IntelligentBillBoardManager : IIntelligentBillBoardManager
   {
     private readonly IMoviesRepository _moviesRepository;
-    private readonly IGenresRepository _genresRepository;
     private readonly IKeywordsRepository _keywordsRepository;
     private readonly IDetailsRepository _detailsRepository;
 
@@ -17,47 +17,32 @@ namespace AppspaceChallenge.API.Services
     private IEnumerable<BeezyCinema.Movie> sucessfulMoviesInCity;
     private IList<string> assignedMovies;
     private const int resultsPerPage = 20;
-    private IEnumerable<TMBD.Genre> genres;
 
     public IntelligentBillBoardManager(IMoviesRepository moviesRepository,
-      IGenresRepository genresRepository,
       IKeywordsRepository keywordsRepository,
       IDetailsRepository detailsRepository)
     {
       _moviesRepository = moviesRepository;
-      _genresRepository = genresRepository;
       _keywordsRepository = keywordsRepository;
       _detailsRepository = detailsRepository;
     }
 
     public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(DTOInput.IntelligentBillboardRequest request)
     {
-      int numberOfWeeks = CompleteWeeks(request.From, request.To);
-      int minimumResults = numberOfWeeks * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
-      int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);
+      DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
+      assignedMovies = new List<string>();
       movies = new List<TMBD.Movie>();
-
-      for (var currentPage = 1; currentPage <= minimumPages; currentPage++)
-      {
-        var result = await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, currentPage);
-        movies.AddRange(result);
-      }
 
       if (request.IncludeSuccessfulMoviesInCity && request.CityId.HasValue && request.CityId > 0)
       {
         sucessfulMoviesInCity = _moviesRepository.GetMoviesWithBiggestSeatsSold(request.CityId.Value);
       }
 
-      if (movies == null || !movies.Any())
-        throw new Exception("No movies found");
+      int numberOfWeeks = CompleteWeeks(request.From, request.To);
+      int minimumResults = numberOfWeeks * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
+      int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);      
 
-      genres = await _genresRepository.GetGenres();
-
-      if (movies == null || !movies.Any())
-        throw new Exception("No genres found");
-
-      DTOOutput.IntelligentBillboard billboard = new DTOOutput.IntelligentBillboard();
-      assignedMovies = new List<string>();
+      await GetMoviesFromTMDB(request.From, request.To, minimumPages);
 
       for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
@@ -72,6 +57,19 @@ namespace AppspaceChallenge.API.Services
       }
       return billboard;
     }
+
+    private async Task GetMoviesFromTMDB(DateTime from, DateTime to, int minimumPages)
+    {
+      for (var currentPage = 1; currentPage <= minimumPages; currentPage++)
+      {
+        var result = await _moviesRepository.GetMoviesFromTMDB(from, to, currentPage);
+        movies.AddRange(result);
+      }
+
+      if (movies == null || !movies.Any())
+        throw new Exception("No movies found");
+    }
+
     static int CompleteWeeks(DateTime from, DateTime to)
     {
       int days = (int)(to - from).TotalDays + 1;
@@ -161,7 +159,7 @@ namespace AppspaceChallenge.API.Services
         Overview = movie.Overview,
         ReleaseDate = movie.Release_date,
         Language = movie.Original_language,
-        Genres = movie.Genre_ids.Select(id => genres.FirstOrDefault(g => g.Id == id).Name).ToList(),
+        Genres = movie.Genre_ids.Select(id => Genres.GetGenreByTMDBId(id)).ToList(),
         Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
         Website = (await _detailsRepository.GetDetails(movie.Id)).Homepage
       };

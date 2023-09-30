@@ -28,5 +28,25 @@ namespace AppspaceChallenge.API.Constants
         { "War", (18, 10752) },
         { "Western", (19, 37) }
      };
+    public static string GetGenreByTMDBId(int tmdbId)
+    {
+      foreach (var genre in BlockbusterGenres)
+      {
+        if (genre.Value.TMDBId == tmdbId)
+        {
+          return genre.Key;
+        }
+      }
+
+      foreach (var genre in MinorityGenres)
+      {
+        if (genre.Value.TMDBId == tmdbId)
+        {
+          return genre.Key;
+        }
+      }
+
+      throw new ArgumentException("No genre found.");
+    }
   }
 }

@@ -15,7 +15,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IMoviesRepository, MoviesRepository>();
-builder.Services.AddScoped<IGenresRepository, GenresRepository>();
 builder.Services.AddScoped<IKeywordsRepository, KeywordsRepository>();
 builder.Services.AddScoped<IDetailsRepository, DetailsRepository>();
 builder.Services.AddScoped<IIntelligentBillBoardManager, IntelligentBillBoardManager>();
