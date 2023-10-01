@@ -2,7 +2,6 @@ using AppspaceChallenge.API.DTO.Input.Managers;
 using AppspaceChallenge.DataAccess.Constants;
 using AppspaceChallenge.DataAccess.Repositories;
 using BeezyCinema = AppspaceChallenge.DataAccess.Model.BeezyCinema;
-using DTOInput = AppspaceChallenge.API.DTO.Input;
 using DTOOutput = AppspaceChallenge.API.DTO.Output;
 using TMBD = AppspaceChallenge.DataAccess.Model.TMBD;
 
@@ -11,8 +10,7 @@ namespace AppspaceChallenge.API.Services
   public class IntelligentBillBoardManager : IIntelligentBillBoardManager
   {
     private readonly IMoviesRepository _moviesRepository;
-    private readonly IKeywordsRepository _keywordsRepository;
-    private readonly IDetailsRepository _detailsRepository;
+    private readonly IMovieDetailsRepository _movieDetailsRepository;
 
     private List<TMBD.Movie> movies;
     private IEnumerable<BeezyCinema.Movie> sucessfulMoviesInCity;
@@ -20,12 +18,10 @@ namespace AppspaceChallenge.API.Services
     private const int resultsPerPage = 20;
 
     public IntelligentBillBoardManager(IMoviesRepository moviesRepository,
-      IKeywordsRepository keywordsRepository,
-      IDetailsRepository detailsRepository)
+      IMovieDetailsRepository detailsRepository)
     {
       _moviesRepository = moviesRepository;
-      _keywordsRepository = keywordsRepository;
-      _detailsRepository = detailsRepository;
+      _movieDetailsRepository = detailsRepository;
     }
 
     public async Task<DTOOutput.IntelligentBillboard> CreateIntelligentBillboard(IntelligentBillboardRequest request)
@@ -161,8 +157,8 @@ namespace AppspaceChallenge.API.Services
         ReleaseDate = movie.Release_date,
         Language = movie.Original_language,
         Genres = movie.Genre_ids.Select(id => Genres.GetGenreByTMDBId(id)).ToList(),
-        Keywords = await _keywordsRepository.GetKeywordNames(movie.Id),
-        Website = (await _detailsRepository.GetDetails(movie.Id)).Homepage
+        Keywords = await _movieDetailsRepository.GetKeywordNames(movie.Id),
+        Website = (await _movieDetailsRepository.GetWebSite(movie.Id)).Homepage
       };
     }
 
@@ -177,8 +173,8 @@ namespace AppspaceChallenge.API.Services
         ReleaseDate = movie.ReleaseDate,
         Language = movie.OriginalLanguage,
         Genres = movie.MovieGenres.Select(g => Genres.GetGenreByBeezyCinemaId(g.GenreId)).ToList(),
-        Keywords = await _keywordsRepository.GetKeywordNames(movieTMDB.Id),
-        Website = (await _detailsRepository.GetDetails(movieTMDB.Id)).Homepage
+        Keywords = await _movieDetailsRepository.GetKeywordNames(movieTMDB.Id),
+        Website = (await _movieDetailsRepository.GetWebSite(movieTMDB.Id)).Homepage
       };
     }
   }

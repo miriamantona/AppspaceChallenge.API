@@ -2,6 +2,7 @@ using AppspaceChallenge.DataAccess.DBContext;
 using AppspaceChallenge.DataAccess.Repositories;
 using AppspaceChallenge.API.Services;
 using Microsoft.EntityFrameworkCore;
+using AppspaceChallenge.DataAccess.Utilities;
 
 var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -14,9 +15,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<IHttpClientWrapper, HttpClientWrapper>();
 builder.Services.AddScoped<IMoviesRepository, MoviesRepository>();
-builder.Services.AddScoped<IKeywordsRepository, KeywordsRepository>();
-builder.Services.AddScoped<IDetailsRepository, DetailsRepository>();
+builder.Services.AddScoped<IMovieDetailsRepository, MovieDetailsRepository>();
 builder.Services.AddScoped<IIntelligentBillBoardManager, IntelligentBillBoardManager>();
 
 
