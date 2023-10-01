@@ -18,7 +18,7 @@ namespace AppspaceChallenge.API.DTO.Input.Managers
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-      if (To < From)
+      if (To <= From)
       {
         yield return new ValidationResult(
             errorMessage: "'To' date  must be greater than 'From' date",
