@@ -16,6 +16,7 @@ namespace AppspaceChallenge.API.Services
     private IEnumerable<BeezyCinema.Movie> sucessfulMoviesInCity;
     private IList<string> assignedMovies;
     private const int resultsPerPage = 20;
+    private int pages = 1;
 
     public IntelligentBillBoardManager(IMoviesRepository moviesRepository,
       IMovieDetailsRepository detailsRepository)
@@ -37,9 +38,9 @@ namespace AppspaceChallenge.API.Services
 
       int numberOfWeeks = CompleteWeeks(request.From, request.To);
       int minimumResults = numberOfWeeks * (request.ScreensInBigRooms + request.ScreensInSmallRooms);
-      int minimumPages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);      
+      int pages = (int)Math.Ceiling((double)minimumResults / resultsPerPage);      
 
-      await GetMoviesFromTMDB(request.From, request.To, minimumPages);
+      await GetMoviesFromTMDB(request.From, request.To, pages);
 
       for (DateTime date = request.From; date <= request.To; date = date.AddDays(8 - (int)date.DayOfWeek))
       {
@@ -47,8 +48,8 @@ namespace AppspaceChallenge.API.Services
         {
           From = date,
           To = date.AddDays(7 - (int)date.DayOfWeek),
-          BigRoomMovies = await SearchMoviesForBigRooms(date, request, minimumPages),
-          SmallRoomMovies = await SearchMoviesForSmallRooms(date, request, minimumPages)
+          BigRoomMovies = await SearchMoviesForBigRooms(date, request),
+          SmallRoomMovies = await SearchMoviesForSmallRooms(date, request)
         };
         billboard.WeeklyPlannings.Add(weeklyPlanning);
       }
@@ -76,7 +77,7 @@ namespace AppspaceChallenge.API.Services
       return totalDays / 7;
     }
 
-    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForBigRooms(DateTime currentDay, IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForBigRooms(DateTime currentDay, IntelligentBillboardRequest request)
     {
       IList<DTOOutput.MovieRecommendation> recommendedMovies = new List<DTOOutput.MovieRecommendation>();
 
@@ -107,8 +108,8 @@ namespace AppspaceChallenge.API.Services
 
         if (moviesForBigRooms == null || !moviesForBigRooms.Any())
         {
-          movies.AddRange(await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, minimumPages++));
-          await SearchMoviesForBigRooms(currentDay, request, minimumPages++);
+          movies.AddRange(await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, pages++));
+          await SearchMoviesForBigRooms(currentDay, request);
         }
 
         foreach (var movie in moviesForBigRooms)
@@ -120,7 +121,7 @@ namespace AppspaceChallenge.API.Services
       return recommendedMovies;
     }
 
-    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForSmallRooms(DateTime currentDay, IntelligentBillboardRequest request, int minimumPages)
+    private async Task<IList<DTOOutput.MovieRecommendation>> SearchMoviesForSmallRooms(DateTime currentDay, IntelligentBillboardRequest request)
     {
       // A movie is considered for a small room if more than half of its genres are classified as minority genres.
 
@@ -135,8 +136,8 @@ namespace AppspaceChallenge.API.Services
 
       if (moviesForSmalRooms == null || !moviesForSmalRooms.Any())
       {
-        movies.AddRange(await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, minimumPages++));
-        await SearchMoviesForSmallRooms(currentDay, request, minimumPages++);
+        movies.AddRange(await _moviesRepository.GetMoviesFromTMDB(request.From, request.To, pages++));
+        await SearchMoviesForSmallRooms(currentDay, request);
       }
 
       foreach (var movie in moviesForSmalRooms)
